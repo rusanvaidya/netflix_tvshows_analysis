@@ -1,5 +1,5 @@
 # Netflix TvShows Analysis
-
+ 
 The scatterplot examines the relationship between the year of release for TV shows and the number of seasons each show had. By visualizing this data, it becomes evident that shows in recent years tend to have more seasons compared to those released in the past. This observation suggests a potential shift in audience preferences or production strategies in the television industry.
 
 <img src = "ext/13.png">
