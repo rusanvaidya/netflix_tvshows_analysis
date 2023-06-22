@@ -1,0 +1,152 @@
+---
+title: "Netflix Dataset"
+output: html_document
+date: "2023-03-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Setting working directory
+
+```{r}
+path <- "E:/EDU_UTS/UTS_ASSIGNMENTS/36104 Data Visualization and Narratives/TASK(1)_PART(B)/code"
+setwd(path)
+```
+
+## Installing Packages
+
+```{r}
+install.packages("dyplr")
+install.packages("lubridate")
+install.packages("plotly")
+install.packages("ggplot2")
+```
+## Read csv file
+
+```{r}
+df <- read.csv("netflix1.csv")
+head(df, 5)
+```
+
+## Checking data types
+
+```{r}
+str(df)
+```
+## Checking for missing rows in dataset
+
+```{r}
+missing_rows <- which(is.na(df))
+print(missing_rows)
+```
+## Creating a subset dataframe
+
+```{r}
+df_tvshows <- df[df$type == 'TV Show',]
+head(df_tvshows, 5)
+```
+
+## Changing date from character to string
+
+```{r}
+df_tvshows$date_added <- as.Date(df_tvshows$date_added, format="%m/%d/%Y")
+head(df_tvshows, 5)
+```
+
+## Removing Seasons from duration and renaming column as season
+
+```{r}
+df_tvshows$duration = gsub("Seasons", "", df_tvshows$duration)
+df_tvshows$duration = gsub("Season", "", df_tvshows$duration)
+df_tvshows$duration <- as.numeric(df_tvshows$duration)
+head(df_tvshows, 5)
+```
+```{r}
+library(dplyr)
+
+df_tvshows <- rename(df_tvshows, seasons = duration)
+head(df_tvshows, 5)
+```
+
+```{r}
+str(df_tvshows)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+library(tidyr)
+
+unique_vals <- unique(unlist(strsplit(df_tvshows$listed_in, ", ")))
+
+# create new columns for each unique value
+for (val in unique_vals) {
+  df_tvshows[[val]] <- as.integer(grepl(val, df_tvshows$listed_in))
+}
+
+# remove the original "listed_in" column
+df_new <- df_tvshows[, !names(df_tvshows) %in% "listed_in"]
+df_new
+```
+
+```{r}
+str(df_new)
+```
+
+```{r}
+library(ggplot2)
+
+scatter <- ggplot(df_tvshows, aes(x = release_year, y = seasons)) + 
+  geom_point() + 
+  labs(title = 'Relation between release year and seasons', x = 'Release Year', y='Season')
+scatter
+```
+```{r}
+ggplot(df_tvshows, aes(x = rating, y = seasons)) +
+  geom_boxplot(fill = "blue") +
+  labs(title = "Distribution of number of seasons by rating", x = 'Rating', y = 'Season')
+```
+
+```{r}
+library(ggplot2)
+
+df_grouped <- df_tvshows %>% group_by(country) %>%
+  summarize(count = n()) %>%
+  ungroup()
+
+# Replace country names with "Other" for those with a count less than 200
+df_grouped$country_mod <- ifelse(df_grouped$count < 200, "Other", df_grouped$country)
+
+# Merge the modified data frame with the original data frame
+df_merged <- merge(df_tvshows, df_grouped, by = "country")
+
+# Create the heatmap using ggplot2
+ggplot(df_merged, aes(x = rating, y = seasons, fill = country_mod)) +
+  geom_tile() +
+  scale_fill_manual(values = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"), na.value = "gray90") +
+  labs(title = "Heatmap of Seasons by Rating and Country", x = "Rating", y = "Season")
+
+```
+
+
+```{r}
+library(dplyr)
+library(plotly)
+sums <- colSums(df_new[unique_vals])
+
+barfig <- plot_ly(x = names(sums), y = sums, type = "bar")
+barfig
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
